@@ -1,0 +1,36 @@
+name: flutter99
+description: "A new Flutter project."
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
+  image_picker: ^1.1.2
+  intl: ^0.18.0
+  url_launcher: ^6.0.20
+
+  cupertino_icons: ^1.0.8
+  firebase_auth_web: ^5.8.13
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - images/logo2.png
+    - images/fondo1.jpg
+    - images/fondo2.jpg
+    - images/fondo.jpg
