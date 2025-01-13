@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CatchTheBlocks extends StatefulWidget {
   const CatchTheBlocks({Key? key}) : super(key: key);
@@ -16,6 +17,7 @@ class _CatchTheBlocksState extends State<CatchTheBlocks> {
       0.03; // Altura de la canasta relativa a la pantalla
   static const double basketWidthRatio =
       0.25; // Ancho de la canasta relativo a la pantalla
+
   double basketX = 0.0; // Posición inicial de la canasta
   double blockX = Random().nextDouble() * 2 - 1; // Bloque en posición aleatoria
   double blockY = -1.0; // Bloque comienza fuera de la pantalla
@@ -95,97 +97,105 @@ class _CatchTheBlocksState extends State<CatchTheBlocks> {
 
     return Scaffold(
       backgroundColor: Colors.blueAccent,
-      body: Stack(
-        children: [
-          // Bloque que cae
-          AnimatedContainer(
-            duration: Duration(milliseconds: 0),
-            alignment: Alignment(blockX, blockY),
-            child: Container(
-              width: blockSize,
-              height: blockSize,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-
-          // Canasta
-          AnimatedContainer(
-            duration: Duration(milliseconds: 0),
-            alignment: Alignment(basketX, 0.9),
-            child: Container(
-              width: basketWidth,
-              height: basketHeight,
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-
-          // Puntaje
-          Positioned(
-            top: 50.0,
-            left: 20.0,
-            child: Text(
-              'Puntaje: $score',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-          // Mensaje de fin de juego
-          if (isGameOver)
-            Center(
-              child: Container(
-                color: Colors.black.withOpacity(0.7),
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '¡Juego Terminado!\nPuntaje final: $score',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _startGame,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                      child: Text('Reiniciar', style: TextStyle(fontSize: 18)),
-                    ),
-                  ],
+      body: Focus(
+        autofocus: true,
+        onKey: (FocusNode node, RawKeyEvent event) {
+          if (event is RawKeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+              _moveBasket(-0.1);
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              _moveBasket(0.1);
+            }
+          }
+          return KeyEventResult.handled;
+        },
+        child: GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            if (details.delta.dx > 0) {
+              _moveBasket(0.1); // Mover a la derecha
+            } else {
+              _moveBasket(-0.1); // Mover a la izquierda
+            }
+          },
+          child: Stack(
+            children: [
+              // Bloque que cae
+              AnimatedContainer(
+                duration: Duration(milliseconds: 0),
+                alignment: Alignment(blockX, blockY),
+                child: Container(
+                  width: blockSize,
+                  height: blockSize,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
-        ],
+
+              // Canasta
+              AnimatedContainer(
+                duration: Duration(milliseconds: 0),
+                alignment: Alignment(basketX, 0.9),
+                child: Container(
+                  width: basketWidth,
+                  height: basketHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+
+              // Puntaje
+              Positioned(
+                top: 50.0,
+                left: 20.0,
+                child: Text(
+                  'Puntaje: $score',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              // Mensaje de fin de juego
+              if (isGameOver)
+                Center(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.7),
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '¡Juego Terminado!\nPuntaje final: $score',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _startGame,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                          child:
+                              Text('Reiniciar', style: TextStyle(fontSize: 18)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
-      bottomNavigationBar: isGameOver
-          ? null
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_left, color: Colors.white, size: 40),
-                  onPressed: () => _moveBasket(-0.1),
-                ),
-                IconButton(
-                  icon: Icon(Icons.arrow_right, color: Colors.white, size: 40),
-                  onPressed: () => _moveBasket(0.1),
-                ),
-              ],
-            ),
     );
   }
 
