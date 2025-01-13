@@ -2,36 +2,39 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-class FlappyBlock extends StatefulWidget {
+class CatchTheBlocks extends StatefulWidget {
+  const CatchTheBlocks({Key? key}) : super(key: key);
+
   @override
-  _FlappyBlockState createState() => _FlappyBlockState();
+  _CatchTheBlocksState createState() => _CatchTheBlocksState();
 }
 
-class _FlappyBlockState extends State<FlappyBlock> {
-  static const double gravity = 2.0;
-  static const double jumpForce = -18.0; // Ajustado para mayor control
-  static const double blockSize = 40.0;
-  static const double obstacleWidth = 80.0;
-
-  double blockY = 0.0;
-  double velocity = 0.0;
-
-  List<Obstacle> obstacles = [];
-  double obstacleSpeed = 1.5; // Velocidad inicial ajustada
+class _CatchTheBlocksState extends State<CatchTheBlocks> {
+  static const double basketWidth = 100.0;
+  static const double basketHeight = 20.0;
+  static const double blockSize = 30.0;
+  double basketX = 0.0; // Posición inicial de la canasta
+  double blockX = Random().nextDouble() * 2 - 1; // Bloque en posición aleatoria
+  double blockY = -1.0; // Bloque comienza fuera de la pantalla
+  double blockFallSpeed = 0.005; // Velocidad inicial de caída
   int score = 0;
   bool isGameOver = false;
-  bool isGameStarted = false;
 
   late Timer gameLoopTimer;
 
+  @override
+  void initState() {
+    super.initState();
+    _startGame();
+  }
+
   void _startGame() {
     setState(() {
-      blockY = 0.0;
-      velocity = 0.0;
       score = 0;
       isGameOver = false;
-      isGameStarted = true;
-      obstacles = List.generate(3, (i) => Obstacle(300.0 + i * 200));
+      blockX = Random().nextDouble() * 2 - 1;
+      blockY = -1.0;
+      blockFallSpeed = 0.005;
     });
 
     gameLoopTimer = Timer.periodic(Duration(milliseconds: 16), (timer) {
@@ -43,44 +46,33 @@ class _FlappyBlockState extends State<FlappyBlock> {
     setState(() {
       if (isGameOver) return;
 
-      // Actualizar posición del bloque
-      velocity += gravity;
-      blockY += velocity * 0.016;
+      blockY += blockFallSpeed;
 
-      // Limitar el bloque dentro de los límites de la pantalla
-      if (blockY > 1.0 || blockY < -1.0) {
+      // Si el bloque llega al fondo sin ser atrapado
+      if (blockY > 1.0) {
         _gameOver();
       }
 
-      // Actualizar obstáculos
-      for (var obstacle in obstacles) {
-        obstacle.x -= obstacleSpeed;
-
-        if (obstacle.x < -1.2) {
-          obstacle.x = 1.2;
-          obstacle.gapY = Random().nextDouble() * 0.6 - 0.3;
-          score++;
-          if (score % 5 == 0) {
-            obstacleSpeed += 0.2; // Incrementar la velocidad cada 5 puntos
-          }
-        }
-
-        // Detectar colisión
-        if (obstacle.collidesWith(blockY, blockSize)) {
-          _gameOver();
-        }
+      // Si el bloque es atrapado
+      if ((blockY >= 0.9) &&
+          (blockX >
+              basketX - basketWidth / MediaQuery.of(context).size.width) &&
+          (blockX <
+              basketX + basketWidth / MediaQuery.of(context).size.width)) {
+        score++;
+        blockY = -1.0; // Reinicia la posición del bloque
+        blockX = Random().nextDouble() * 2 - 1;
+        blockFallSpeed += 0.001; // Incrementa la velocidad de caída
       }
     });
   }
 
-  void _jump() {
-    if (isGameOver) {
-      _startGame();
-    } else {
-      setState(() {
-        velocity = jumpForce;
-      });
-    }
+  void _moveBasket(double direction) {
+    setState(() {
+      basketX += direction;
+      if (basketX < -1.0) basketX = -1.0; // Límite izquierdo
+      if (basketX > 1.0) basketX = 1.0; // Límite derecho
+    });
   }
 
   void _gameOver() {
@@ -94,110 +86,97 @@ class _FlappyBlockState extends State<FlappyBlock> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blueAccent,
-      body: isGameStarted
-          ? GestureDetector(
-              onTap: _jump,
-              child: Stack(
-                children: [
-                  // Bloque del jugador
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 0),
-                    alignment: Alignment(0.0, blockY),
-                    child: Container(
-                      width: blockSize,
-                      height: blockSize,
-                      color: Colors.red,
-                    ),
-                  ),
+      body: Stack(
+        children: [
+          // Bloque que cae
+          AnimatedContainer(
+            duration: Duration(milliseconds: 0),
+            alignment: Alignment(blockX, blockY),
+            child: Container(
+              width: blockSize,
+              height: blockSize,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
 
-                  // Obstáculos
-                  ...obstacles.map(
-                    (obstacle) => ObstacleWidget(obstacle: obstacle),
-                  ),
+          // Canasta
+          AnimatedContainer(
+            duration: Duration(milliseconds: 0),
+            alignment: Alignment(basketX, 0.9),
+            child: Container(
+              width: basketWidth,
+              height: basketHeight,
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
 
-                  // Puntaje
-                  Positioned(
-                    top: 50.0,
-                    left: 20.0,
-                    child: Text(
-                      'Puntaje: $score',
+          // Puntaje
+          Positioned(
+            top: 50.0,
+            left: 20.0,
+            child: Text(
+              'Puntaje: $score',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // Mensaje de fin de juego
+          if (isGameOver)
+            Center(
+              child: Container(
+                color: Colors.black.withOpacity(0.7),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '¡Juego Terminado!\nPuntaje final: $score',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-
-                  // Mensaje de fin de juego
-                  if (isGameOver)
-                    Center(
-                      child: Text(
-                        '¡Juego Terminado!\nToca para reiniciar',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _startGame,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
                       ),
+                      child: Text('Reiniciar', style: TextStyle(fontSize: 18)),
                     ),
-                ],
+                  ],
+                ),
               ),
-            )
-          : _buildInstructions(),
-    );
-  }
-
-  Widget _buildInstructions() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '¡Bienvenido a Flappy Block!',
-            style: TextStyle(
-              fontSize: 28.0,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
             ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 20),
-          Text(
-            'Instrucciones:',
-            style: TextStyle(
-              fontSize: 20.0,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            '1. Toca la pantalla para hacer que el bloque salte.\n'
-            '2. Evita los obstáculos verdes.\n'
-            '3. Gana puntos al pasar los obstáculos.\n'
-            '4. Toca para comenzar.',
-            style: TextStyle(
-              fontSize: 18.0,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: _startGame,
-            child: Text(
-              '¡Comenzar!',
-              style: TextStyle(fontSize: 20.0),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 15.0),
-            ),
-          ),
         ],
       ),
+      bottomNavigationBar: isGameOver
+          ? null
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_left, color: Colors.white, size: 40),
+                  onPressed: () => _moveBasket(-0.1),
+                ),
+                IconButton(
+                  icon: Icon(Icons.arrow_right, color: Colors.white, size: 40),
+                  onPressed: () => _moveBasket(0.1),
+                ),
+              ],
+            ),
     );
   }
 
@@ -205,49 +184,5 @@ class _FlappyBlockState extends State<FlappyBlock> {
   void dispose() {
     gameLoopTimer.cancel();
     super.dispose();
-  }
-}
-
-class Obstacle {
-  double x;
-  double gapY;
-  static const double gapHeight = 0.4;
-
-  Obstacle(this.x) : gapY = Random().nextDouble() * 0.6 - 0.3;
-
-  bool collidesWith(double blockY, double blockSize) {
-    return (x < -0.05 && x > -0.15) &&
-        (blockY < gapY - gapHeight / 2 || blockY > gapY + gapHeight / 2);
-  }
-}
-
-class ObstacleWidget extends StatelessWidget {
-  final Obstacle obstacle;
-
-  const ObstacleWidget({Key? key, required this.obstacle}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 0),
-      alignment: Alignment(obstacle.x, 0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 80.0,
-            height: MediaQuery.of(context).size.height *
-                (0.5 + obstacle.gapY - Obstacle.gapHeight / 2),
-            color: Colors.green,
-          ),
-          Container(
-            width: 80.0,
-            height: MediaQuery.of(context).size.height *
-                (0.5 - obstacle.gapY - Obstacle.gapHeight / 2),
-            color: Colors.green,
-          ),
-        ],
-      ),
-    );
   }
 }

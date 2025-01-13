@@ -3,7 +3,7 @@ import 'create_post_screen.dart';
 import 'view_posts_screen.dart';
 import 'save_post_screen.dart';
 import 'notifications_screen.dart';
-import 'juegos.dart'; // Importamos FlappyBlock
+import 'juegos.dart'; // Importamos CatchTheBlocks
 
 class HomeScreen extends StatelessWidget {
   final String userId;
@@ -120,13 +120,14 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 30),
 
-              // Botón para el juego Flappy Block
+              // Botón para el juego Catch the Falling Blocks
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => FlappyBlock(), // Navegar al juego
+                      builder: (context) =>
+                          CatchTheBlocks(), // Navegar al juego
                     ),
                   );
                 },
@@ -138,8 +139,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 ),
-                child:
-                    Text('Jugar Flappy Block', style: TextStyle(fontSize: 18)),
+                child: Text('Jugar Catch the Blocks',
+                    style: TextStyle(fontSize: 18)),
               ),
             ],
           ),
