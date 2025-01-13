@@ -10,9 +10,12 @@ class CatchTheBlocks extends StatefulWidget {
 }
 
 class _CatchTheBlocksState extends State<CatchTheBlocks> {
-  static const double basketWidth = 100.0;
-  static const double basketHeight = 20.0;
-  static const double blockSize = 30.0;
+  static const double blockSizeRatio =
+      0.08; // Tamaño del bloque relativo a la pantalla
+  static const double basketHeightRatio =
+      0.03; // Altura de la canasta relativa a la pantalla
+  static const double basketWidthRatio =
+      0.25; // Ancho de la canasta relativo a la pantalla
   double basketX = 0.0; // Posición inicial de la canasta
   double blockX = Random().nextDouble() * 2 - 1; // Bloque en posición aleatoria
   double blockY = -1.0; // Bloque comienza fuera de la pantalla
@@ -54,11 +57,10 @@ class _CatchTheBlocksState extends State<CatchTheBlocks> {
       }
 
       // Si el bloque es atrapado
+      final screenWidth = MediaQuery.of(context).size.width;
       if ((blockY >= 0.9) &&
-          (blockX >
-              basketX - basketWidth / MediaQuery.of(context).size.width) &&
-          (blockX <
-              basketX + basketWidth / MediaQuery.of(context).size.width)) {
+          (blockX > basketX - basketWidthRatio) &&
+          (blockX < basketX + basketWidthRatio)) {
         score++;
         blockY = -1.0; // Reinicia la posición del bloque
         blockX = Random().nextDouble() * 2 - 1;
@@ -84,6 +86,13 @@ class _CatchTheBlocksState extends State<CatchTheBlocks> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final blockSize = screenWidth * blockSizeRatio;
+    final basketHeight = screenHeight * basketHeightRatio;
+    final basketWidth = screenWidth * basketWidthRatio;
+
     return Scaffold(
       backgroundColor: Colors.blueAccent,
       body: Stack(
